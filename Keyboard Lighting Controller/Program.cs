@@ -1,10 +1,9 @@
 ﻿using System;
-using System.IO;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
 using System.Windows.Forms;
 
-namespace Keyboard_Lighting_Conrtroller
+namespace Keyboard_Lighting_Controller
 {
     class Program
     {
