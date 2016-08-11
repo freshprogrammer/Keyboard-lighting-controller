@@ -2,6 +2,15 @@
 using System.Runtime.InteropServices;
 using System.Diagnostics;
 using System.Windows.Forms;
+using CUE.NET;
+using CUE.NET.Devices.Keyboard;
+using CUE.NET.Exceptions;
+using CUE.NET.Devices.Generic.Enums;
+using System.Drawing;
+using CUE.NET.Devices.Keyboard.Keys;
+using CUE.NET.Devices.Keyboard.Enums;
+using System.Threading.Tasks;
+using System.Threading;
 
 namespace Keyboard_Lighting_Controller
 {
@@ -50,8 +59,12 @@ namespace Keyboard_Lighting_Controller
 
             Console.WriteLine("Startup");
             //Application.Run();
+
+            TestKeyboardLights();
+
             UnhookWindowsHookEx(_hookID);
             Console.WriteLine("unhooked");
+
         }
 
         private delegate IntPtr LowLevelKeyboardProc(
@@ -81,6 +94,95 @@ namespace Keyboard_Lighting_Controller
                 return SetWindowsHookEx(WH_KEYBOARD_LL, proc,
                 GetModuleHandle(curModule.ModuleName), 0);
             }
+        }
+
+        private static void TestKeyboardLights()
+        {
+            Console.WriteLine("Press any key to exit ...");
+            Console.WriteLine();
+
+            try
+            {
+                CueSDK.Initialize();
+                Console.WriteLine("Initialized with " + CueSDK.LoadedArchitecture + "-SDK");
+
+                // Get connected keyboard or throw exception if there is no light controllable keyboard connected
+                CorsairKeyboard keyboard = CueSDK.KeyboardSDK;
+                if (keyboard == null)
+                    throw new WrapperException("No keyboard found");
+
+                const float SPEED = 100f; // mm/sec
+                const float BRUSH_MODE_CHANGE_TIMER = 2f;
+                Random random = new Random();
+
+                keyboard.UpdateMode = UpdateMode.Continuous;
+                //keyboard.Brush = new SolidColorBrush(Color.Blue);
+
+                RectangleF spot = new RectangleF(keyboard.KeyboardRectangle.Width / 2f, keyboard.KeyboardRectangle.Y / 2f, 160, 80);
+                PointF target = new PointF(spot.X, spot.Y);
+                //RectangleKeyGroup spotGroup = new RectangleKeyGroup(keyboard, spot) { Brush = new LinearGradientBrush(new RainbowGradient()) };
+
+
+                keyboard.Update();
+
+                int keyNo = 0;
+                const int framesPerKey = 2;
+
+                const float glowTime = 2;
+
+
+                float brushModeTimer = 0;
+                keyboard.Updating += (sender, eventArgs) =>
+                {
+                    brushModeTimer += eventArgs.DeltaTime;
+
+                    foreach (CorsairKey k in keyboard.Keys)
+                    {
+                        k.Led.Color = Color.WhiteSmoke;
+                    }
+
+                    if (keyboard['Q'].Led.Color == Color.Red)
+                        keyboard['Q'].Led.Color = Color.Black;
+                    else
+                        keyboard['Q'].Led.Color = Color.Red;
+
+                    if (keyboard['E'].Led.Color == Color.Red)
+                        keyboard['E'].Led.Color = Color.Black;
+                    else if (keyboard['E'].Led.Color == Color.Black)
+                        keyboard['E'].Led.Color = Color.Blue;
+                    else
+                        keyboard['E'].Led.Color = Color.Red;
+
+                    keyboard['G'].Led.Color = Color.Green;
+
+                    CorsairKeyboardKeyId glowKey = CorsairKeyboardKeyId.KeypadMinus;
+                    int r = (int)(512 * (brushModeTimer / glowTime)) % 512;
+                    if (r > 255) r = (512 - r);
+                    keyboard[glowKey].Led.Color = Color.FromArgb(r, 0, 0);
+
+
+                    if (keyNo / framesPerKey > 154) keyNo = 0;
+                    keyboard[(CorsairKeyboardKeyId)(++keyNo / framesPerKey)].Led.Color = Color.Blue;
+
+                    //if(keyboard.)
+
+                };
+            }
+            catch (CUEException ex)
+            {
+                Console.WriteLine("CUE Exception! ErrorCode: " + Enum.GetName(typeof(CorsairError), ex.Error));
+            }
+            catch (WrapperException ex)
+            {
+                Console.WriteLine("Wrapper Exception! Message:" + ex.Message);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Exception! Message:" + ex.Message);
+            }
+
+            while (true)
+                Thread.Sleep(1000); // Don't exit after exception
         }
     }
 }
