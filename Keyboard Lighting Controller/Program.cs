@@ -126,7 +126,7 @@ namespace Keyboard_Lighting_Controller
                 keyboard.Update();
 
                 int keyNo = 0;
-                const int framesPerKey = 2;
+                const int framesPerKey = 4;
 
                 const float glowTime = 2;
 
@@ -160,12 +160,14 @@ namespace Keyboard_Lighting_Controller
                     if (r > 255) r = (512 - r);
                     keyboard[glowKey].Led.Color = Color.FromArgb(r, 0, 0);
 
-
-                    if (keyNo / framesPerKey > 154) keyNo = 0;
-                    keyboard[(CorsairKeyboardKeyId)(++keyNo / framesPerKey)].Led.Color = Color.Blue;
-
-                    //if(keyboard.)
-
+                    CorsairKey k2 = null;
+                    while (k2 == null)
+                    {
+                        if (keyNo / framesPerKey > 154) keyNo = 0;
+                        int k2Val = ++keyNo / framesPerKey;
+                        k2 = keyboard[(CorsairKeyboardKeyId)k2Val];
+                    }
+                    k2.Led.Color = Color.Blue;
                 };
             }
             catch (CUEException ex)
@@ -175,6 +177,10 @@ namespace Keyboard_Lighting_Controller
             catch (WrapperException ex)
             {
                 Console.WriteLine("Wrapper Exception! Message:" + ex.Message);
+            }
+            catch (NullReferenceException ex)
+            {
+                Console.WriteLine("Null Exception! Message:" + ex.Message);
             }
             catch (Exception ex)
             {
