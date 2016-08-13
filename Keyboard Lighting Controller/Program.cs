@@ -98,9 +98,6 @@ namespace Keyboard_Lighting_Controller
 
         private static void TestKeyboardLights()
         {
-            Console.WriteLine("Press any key to exit ...");
-            Console.WriteLine();
-
             try
             {
                 CueSDK.Initialize();
@@ -110,11 +107,7 @@ namespace Keyboard_Lighting_Controller
                 CorsairKeyboard keyboard = CueSDK.KeyboardSDK;
                 if (keyboard == null)
                     throw new WrapperException("No keyboard found");
-
-                const float SPEED = 100f; // mm/sec
-                const float BRUSH_MODE_CHANGE_TIMER = 2f;
-                Random random = new Random();
-
+                
                 keyboard.UpdateMode = UpdateMode.Continuous;
                 //keyboard.Brush = new SolidColorBrush(Color.Blue);
 
@@ -130,6 +123,9 @@ namespace Keyboard_Lighting_Controller
 
                 const float glowTime = 2;
 
+
+                PerformanceCounter cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total", true);
+                PerformanceCounter ramCounter = new PerformanceCounter("Memory", "Available MBytes", true);
 
                 float brushModeTimer = 0;
                 keyboard.Updating += (sender, eventArgs) =>
@@ -168,6 +164,21 @@ namespace Keyboard_Lighting_Controller
                         k2 = keyboard[(CorsairKeyboardKeyId)k2Val];
                     }
                     k2.Led.Color = Color.Blue;
+
+                    if(keyNo%40==0)
+                    {
+                        var TotalPhysicalMemory = new Microsoft.VisualBasic.Devices.ComputerInfo().TotalPhysicalMemory;
+                        var TotalVirtualMemory = new Microsoft.VisualBasic.Devices.ComputerInfo().TotalVirtualMemory;
+                        var AvailablePhysicalMemory = new Microsoft.VisualBasic.Devices.ComputerInfo().AvailablePhysicalMemory;
+                        var AvailableVirtualMemory = new Microsoft.VisualBasic.Devices.ComputerInfo().AvailableVirtualMemory;
+
+                        Console.WriteLine("CPU% = " + cpuCounter.NextValue() + "%");
+                        Console.WriteLine("RAM Available = " + ramCounter.NextValue() + "MB");
+                        Console.WriteLine("TotalPhysicalMemory = " + TotalPhysicalMemory);
+                        Console.WriteLine("TotalVirtualMemory = " + TotalVirtualMemory);
+                        Console.WriteLine("AvailablePhysicalMemory = " + AvailablePhysicalMemory);
+                        Console.WriteLine("AvailableVirtualMemory = " + AvailableVirtualMemory);
+                    }
                 };
             }
             catch (CUEException ex)
